@@ -18,7 +18,32 @@ FramePerSec = pygame.time.Clock()
  
 displaysurface = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Game")
- 
+
+class Square(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__()
+        self.surf = pygame.Surface((30, 30))
+        self.surf.fill((255, 0, 0))  # Red color for the square
+        self.rect = self.surf.get_rect(center=(pos_x, pos_y))
+
+        self.pos = vec(pos_x, pos_y)
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
+
+    def force_movement(self, force_x, force_y):
+        # Adjust acceleration based on the provided forces
+        self.acc.x += force_x
+        self.acc.y += force_y
+
+    def update(self):
+        # Update velocity based on acceleration
+        self.vel += self.acc
+        # Update position based on velocity and reset acceleration
+        self.pos += self.vel + 0.5 * self.acc
+        self.rect.center = self.pos
+        # Reset acceleration for the next frame
+        self.acc *= 0
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
@@ -32,7 +57,22 @@ class Player(pygame.sprite.Sprite):
         self.acc = vec(0,0)
         self.jumping = False
         self.score = 0
- 
+
+    def force_moviment(self, direction):
+        self.acc = vec(0,0.5)
+        self.acc.x = direction
+
+        self.acc.x += self.vel.x * FRIC
+        self.vel += self.acc
+        self.pos += self.vel + 0.5 * self.acc
+
+        if self.pos.x > WIDTH:
+            self.pos.x = 0
+        if self.pos.x < 0:
+            self.pos.x = WIDTH
+             
+        self.rect.midbottom = self.pos
+     
     def move(self):
         self.acc = vec(0,0.5)
     
@@ -59,6 +99,18 @@ class Player(pygame.sprite.Sprite):
         if hits and not self.jumping:
            self.jumping = True
            self.vel.y = -15
+
+    def force_jump(self, force):
+        """
+        Applies a force to the player sprite, causing it to jump with the specified force.
+
+        Args:
+            force (float): The force of the jump.
+        """
+        hits = pygame.sprite.spritecollide(self, platforms, False)
+        if hits and not self.jumping:
+            self.jumping = True
+            self.vel.y = -force       
  
     def cancel_jump(self):
         if self.jumping:
@@ -163,7 +215,8 @@ def compute_moviment(player_x, player_y, closest_platform_x, closest_platform_y)
     print(input)
     output = randomNetwork.forward(input)
     print(output)
-    moviment.press_keys(output[0]*10, output[1]*10)
+    P1.force_moviment(output[1]*10)
+    P1.force_jump(output[0]*10)
 
 while True:
     P1.update()
@@ -206,8 +259,8 @@ while True:
         closest_platform_x = closest_platform.rect.centerx
         closest_platform_y = closest_platform.rect.centery
 
-    
-    print(count)
+
+    #print(count)
     if count == 30:
         print('COMPUTING FUCKING MOVIMENT ')
         compute_moviment(player_x, player_y, closest_platform_x, closest_platform_y)
