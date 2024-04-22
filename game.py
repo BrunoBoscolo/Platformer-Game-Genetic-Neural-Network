@@ -2,7 +2,9 @@ import pygame
 from pygame.locals import *
 import sys
 import random
- 
+import network
+import moviment
+
 pygame.init()
 vec = pygame.math.Vector2 #2 for two dimensional
  
@@ -115,8 +117,20 @@ def plat_gen():
         platforms.add(p)
         all_sprites.add(p)
  
- 
+def get_closest_platform(player, platforms):
+    closest_platform = None
+    closest_distance = float('inf')  # Initialize with infinity
+
+    for platform in platforms:
+        distance = ((platform.rect.centerx - player.rect.centerx) ** 2 +
+                    (platform.rect.centery - player.rect.centery) ** 2) ** 0.5
         
+        if distance < closest_distance:
+            closest_platform = platform
+            closest_distance = distance
+
+    return closest_platform
+
 PT1 = platform()
 P1 = Player()
  
@@ -140,7 +154,17 @@ for x in range(random.randint(4,5)):
     platforms.add(pl)
     all_sprites.add(pl)
  
- 
+randomNetwork = network.RandomNeuralNetwork()
+count = 0
+
+def compute_moviment(player_x, player_y, closest_platform_x, closest_platform_y):
+
+    input = [player_x, player_y, closest_platform_x, closest_platform_y]
+    print(input)
+    output = randomNetwork.forward(input)
+    print(output)
+    moviment.press_keys(output[0]*10, output[1]*10)
+
 while True:
     P1.update()
     for event in pygame.event.get():
@@ -173,8 +197,24 @@ while True:
         displaysurface.blit(entity.surf, entity.rect)
         entity.move()
     
-    with open("player_position.txt", 'w') as file:
-        file.write(f"Player Position - X: {P1.pos.x} Y: {P1.pos.y}\n")
-        
+    player_x = int(P1.pos.x)
+    player_y = int(P1.pos.y)
+
+    closest_platform = get_closest_platform(P1, platforms)
+
+    if closest_platform:
+        closest_platform_x = closest_platform.rect.centerx
+        closest_platform_y = closest_platform.rect.centery
+
+    
+    print(count)
+    if count == 30:
+        print('COMPUTING FUCKING MOVIMENT ')
+        compute_moviment(player_x, player_y, closest_platform_x, closest_platform_y)
+        count = 0
+    
+    else:
+        count += 1
+
     pygame.display.update()
-    FramePerSec.tick(FPS)
+    FramePerSec.tick(30) 

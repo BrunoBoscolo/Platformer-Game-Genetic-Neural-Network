@@ -145,14 +145,3 @@ class debugging:
         print("Output Weights:\n", network.output_weights)
         print("Output Biases:\n", network.output_biases)
 
-
-
-randomNetwork = RandomNeuralNetwork()
-inputs = [30,1,50,60]
-output = randomNetwork.forward(inputs)
-debugging.print_network_parameters(randomNetwork)
-
-generation_list = [[randomNetwork, 10], [randomNetwork, 15]]
-sorted_generation_list = Evolution.select_top_half(generation_list)
-mutate_custom_network_array = genetics.mutate_network_parameters(sorted_generation_list)
-debugging.print_network_parameters(mutate_custom_network_array[0])
