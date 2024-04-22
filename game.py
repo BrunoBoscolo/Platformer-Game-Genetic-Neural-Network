@@ -18,7 +18,32 @@ FramePerSec = pygame.time.Clock()
  
 displaysurface = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Game")
- 
+
+class Square(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__()
+        self.surf = pygame.Surface((30, 30))
+        self.surf.fill((255, 0, 0))  # Red color for the square
+        self.rect = self.surf.get_rect(center=(pos_x, pos_y))
+
+        self.pos = vec(pos_x, pos_y)
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
+
+    def force_movement(self, force_x, force_y):
+        # Adjust acceleration based on the provided forces
+        self.acc.x += force_x
+        self.acc.y += force_y
+
+    def update(self):
+        # Update velocity based on acceleration
+        self.vel += self.acc
+        # Update position based on velocity and reset acceleration
+        self.pos += self.vel + 0.5 * self.acc
+        self.rect.center = self.pos
+        # Reset acceleration for the next frame
+        self.acc *= 0
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
