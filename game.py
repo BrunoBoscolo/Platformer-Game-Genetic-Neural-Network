@@ -32,7 +32,22 @@ class Player(pygame.sprite.Sprite):
         self.acc = vec(0,0)
         self.jumping = False
         self.score = 0
- 
+
+    def force_moviment(self, space, direction):
+        self.acc = vec(0,0.5)
+        self.acc.x = direction
+
+        self.acc.x += self.vel.x * FRIC
+        self.vel += self.acc
+        self.pos += self.vel + 0.5 * self.acc
+
+        if self.pos.x > WIDTH:
+            self.pos.x = 0
+        if self.pos.x < 0:
+            self.pos.x = WIDTH
+             
+        self.rect.midbottom = self.pos
+     
     def move(self):
         self.acc = vec(0,0.5)
     
