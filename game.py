@@ -82,15 +82,16 @@ class Square(pygame.sprite.Sprite):
                 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
-        super().__init__() 
-        #self.image = pygame.image.load("character.png")
+        super().__init__()
+        # Generate a random color for the player's surface
+        self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         self.surf = pygame.Surface((30, 30))
-        self.surf.fill((255,255,0))
+        self.surf.fill(self.color)
         self.rect = self.surf.get_rect()
-   
+
         self.pos = vec((10, 360))
-        self.vel = vec(0,0)
-        self.acc = vec(0,0)
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
         self.jumping = False
         self.score = 0
 
@@ -195,16 +196,11 @@ def check(platform, groupies):
         C = False
  
 def plat_gen():
-    while len(platforms) < 6:
-        width = random.randrange(50,100)
-        p  = platform()      
-        C = True
-         
-        while C:
-             p = platform()
-             p.rect.center = (random.randrange(0, WIDTH - width),
-                              random.randrange(-50, 0))
-             C = check(p, platforms)
+    while len(platforms) < 12:
+        width = random.randint(50, 100)
+        p = platform()
+        p.rect.center = (random.randint(0, WIDTH - width), random.randint(-50, 0))
+        
         platforms.add(p)
         all_sprites.add(p)
  
@@ -225,10 +221,10 @@ def get_closest_platform(player, platforms):
 PT1 = platform()
 P1 = Player()
  
-PT1.surf = pygame.Surface((WIDTH, 20))
+'''PT1.surf = pygame.Surface((WIDTH, 20))
 PT1.surf.fill((255,0,0))
 PT1.rect = PT1.surf.get_rect(center = (WIDTH/2, HEIGHT - 10))
- 
+''' 
 all_sprites = pygame.sprite.Group()
 all_sprites.add(PT1)
 all_sprites.add(P1)
@@ -238,11 +234,21 @@ platforms.add(PT1)
 
 players = []  # Initialize an empty list for players
 
-# Create 10 players
-for _ in range(50):
-    player = Player()
-    all_sprites.add(player)  # Add player to all_sprites group
-    players.append(player)  # Append player to the players list 
+def create_players(num_players):
+    players = []
+    scores = [0]*num_players
+
+    for _ in range(num_players):
+        player = Player()
+        all_sprites.add(player)
+        players.append(player)
+
+    return players, scores
+
+def delete_players(players_list):
+    for player in players_list:
+        all_sprites.remove(player)
+    del players_list[:]
 
 for x in range(random.randint(4,5)):
     C = True
@@ -261,19 +267,15 @@ def compute_moviment(target, randomNetwork, player_x, player_y, closest_platform
     #print(f'input: {input}')
     output = randomNetwork.forward(input)
     #print(f'output: {output}')
-    target.force_jump(abs(output[0]*10))
-    target.force_moviment(output[1]*10)
+    target.force_jump(abs(output[0]/10))
+    target.force_moviment(output[1]/10)
     
 player_network_list = []
-scores = [0]*50
-
-for player in players:
-            square_neural_network = network.RandomNeuralNetwork()
-            player_network_list.append(square_neural_network)
 
 cicle = 0
 
 def network_moviments(player_count):
+    i = 0
     for player in players:
             sq_x = int(player.pos.x)
             sq_y = int(player.pos.y)
@@ -284,9 +286,9 @@ def network_moviments(player_count):
                 closest_platform_y = closest_platform.rect.centery
 
                 #print('COMPUTING FUCKING SQUARE MOVIMENT ')
-                compute_moviment(player, player_network_list[player_count], sq_x, sq_y, closest_platform_x, closest_platform_y)
+                compute_moviment(player, player_network_list[i], sq_x, sq_y, closest_platform_x, closest_platform_y)
             
-            player_count += 1 
+            i += 1 
 
             player.update()
             displaysurface.blit(player.surf, player.rect)  
@@ -297,15 +299,23 @@ def find_player_with_highest_score(players):
 
     if highest_score == 0:
         return None
-    elif len(players_with_highest_score) == len(players):
+    elif len(players_with_highest_score) !=1:
         return None
     else:
-        return random.choice(players_with_highest_score)
+        return players_with_highest_score[0]
 
 # Add this function to print the high score
-def print_high_score(players):
-    highest_score = max(player.score for player in players)
-    print(f"High Score: {highest_score}")
+def print_high_score(scores):
+    highest_score = max(scores)
+    highest_score_index = scores.index(highest_score)
+    print(f"High Score: {highest_score}, achieved by player {highest_score_index}")
+
+players, scores = create_players(100)
+
+for player in players:
+            square_neural_network = network.RandomNeuralNetwork()
+            player_network_list.append(square_neural_network)
+#plat_gen()
 
 while True:
     P1.update()
@@ -313,7 +323,7 @@ while True:
     for player in players:
         player.update()
 
-    for event in pygame.event.get():
+    '''for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
@@ -328,10 +338,9 @@ while True:
         P1.pos.y += abs(P1.vel.y)
         for plat in platforms:
             plat.rect.y += abs(P1.vel.y)
-            if plat.rect.top >= HEIGHT:
-                plat.kill()
+    '''
  
-    plat_gen()
+    
     displaysurface.fill((0,0,0))
 
     displaysurface.fill((0,0,0))
@@ -353,7 +362,7 @@ while True:
         cicle += 1
     else:
         count += 1
-
+        
         player.update()
         displaysurface.blit(player.surf, player.rect)
 
@@ -362,10 +371,15 @@ while True:
         sorted_networks = network.Evolution.select_top_half(player_scores)
         new_generation = network.genetics.mutate_network_parameters(sorted_networks)
         new_generation = new_generation+new_generation
+        print_high_score(scores)
+        delete_players(players)
+        
+        players, scores = create_players(100)
 
         player_network_list = new_generation
-        print_high_score(players)
+        
         cicle = 0
 
+    #print(scores)
     pygame.display.update()
     FramePerSec.tick(30) 
