@@ -1,3 +1,4 @@
+
 import pygame
 from pygame.locals import *
 import sys
@@ -23,27 +24,62 @@ class Square(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__()
         self.surf = pygame.Surface((30, 30))
-        self.surf.fill((255, 0, 0))  # Red color for the square
+        self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        self.surf.fill(self.color)
         self.rect = self.surf.get_rect(center=(pos_x, pos_y))
 
         self.pos = vec(pos_x, pos_y)
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
 
-    def force_movement(self, force_x, force_y):
-        # Adjust acceleration based on the provided forces
-        self.acc.x += force_x
-        self.acc.y += force_y
+        self.jumping = False
+        self.score = 0
+
+    def force_jump(self, force):
+        """
+        Applies a force to the player sprite, causing it to jump with the specified force.
+
+        Args:
+            force (float): The force of the jump.
+        """
+        hits = pygame.sprite.spritecollide(self, platforms, False)
+        if hits and not self.jumping:
+            self.jumping = True
+            self.vel.y = -force  
+    def force_moviment(self, direction):
+            self.acc = vec(0,0.5)
+            self.acc.x = direction
+
+            self.acc.x += self.vel.x * FRIC
+            self.vel += self.acc
+            self.pos += self.vel + 0.5 * self.acc
+
+            if self.pos.x > WIDTH:
+                self.pos.x = 0
+            if self.pos.x < 0:
+                self.pos.x = WIDTH
+                
+            self.rect.midbottom = self.pos
 
     def update(self):
-        # Update velocity based on acceleration
-        self.vel += self.acc
-        # Update position based on velocity and reset acceleration
-        self.pos += self.vel + 0.5 * self.acc
-        self.rect.center = self.pos
-        # Reset acceleration for the next frame
-        self.acc *= 0
+        hits = pygame.sprite.spritecollide(self ,platforms, False)
+        if self.vel.y > 0:        
+            if hits:
+                if self.pos.y < hits[0].rect.bottom:
+                    if hits[0].point == True:
+                        hits[0].point = False
+                        self.score += 1
 
+                    self.pos.y = hits[0].rect.top +1
+                    self.vel.y = 0
+                    self.jumping = False
+        self.pos.y += abs(self.vel.y)
+        # Adjust platform positions when player reaches the top of the screen
+        for plat in platforms:
+            plat.rect.y += abs(self.vel.y)
+            if plat.rect.top >= HEIGHT:
+                plat.kill()
+                
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
@@ -125,10 +161,13 @@ class Player(pygame.sprite.Sprite):
                     if hits[0].point == True:
                         hits[0].point = False
                         self.score += 1
+                        # Update the corresponding score in the scores list
+                        scores[players.index(self)] = self.score
 
                     self.pos.y = hits[0].rect.top +1
                     self.vel.y = 0
                     self.jumping = False
+ 
  
  
 class platform(pygame.sprite.Sprite):
@@ -196,7 +235,15 @@ all_sprites.add(P1)
  
 platforms = pygame.sprite.Group()
 platforms.add(PT1)
- 
+
+players = []  # Initialize an empty list for players
+
+# Create 10 players
+for _ in range(50):
+    player = Player()
+    all_sprites.add(player)  # Add player to all_sprites group
+    players.append(player)  # Append player to the players list 
+
 for x in range(random.randint(4,5)):
     C = True
     pl = platform()
@@ -206,20 +253,66 @@ for x in range(random.randint(4,5)):
     platforms.add(pl)
     all_sprites.add(pl)
  
-randomNetwork = network.RandomNeuralNetwork()
 count = 0
 
-def compute_moviment(player_x, player_y, closest_platform_x, closest_platform_y):
+def compute_moviment(target, randomNetwork, player_x, player_y, closest_platform_x, closest_platform_y):
 
     input = [player_x, player_y, closest_platform_x, closest_platform_y]
-    print(input)
+    #print(f'input: {input}')
     output = randomNetwork.forward(input)
-    print(output)
-    P1.force_moviment(output[1]*10)
-    P1.force_jump(output[0]*10)
+    #print(f'output: {output}')
+    target.force_jump(abs(output[0]*10))
+    target.force_moviment(output[1]*10)
+    
+player_network_list = []
+scores = [0]*50
+
+for player in players:
+            square_neural_network = network.RandomNeuralNetwork()
+            player_network_list.append(square_neural_network)
+
+cicle = 0
+
+def network_moviments(player_count):
+    for player in players:
+            sq_x = int(player.pos.x)
+            sq_y = int(player.pos.y)
+            closest_platform = get_closest_platform(player, platforms)
+
+            if closest_platform:
+                closest_platform_x = closest_platform.rect.centerx
+                closest_platform_y = closest_platform.rect.centery
+
+                #print('COMPUTING FUCKING SQUARE MOVIMENT ')
+                compute_moviment(player, player_network_list[player_count], sq_x, sq_y, closest_platform_x, closest_platform_y)
+            
+            player_count += 1 
+
+            player.update()
+            displaysurface.blit(player.surf, player.rect)  
+
+def find_player_with_highest_score(players):
+    highest_score = max(player.score for player in players)
+    players_with_highest_score = [player for player in players if player.score == highest_score]
+
+    if highest_score == 0:
+        return None
+    elif len(players_with_highest_score) == len(players):
+        return None
+    else:
+        return random.choice(players_with_highest_score)
+
+# Add this function to print the high score
+def print_high_score(players):
+    highest_score = max(player.score for player in players)
+    print(f"High Score: {highest_score}")
 
 while True:
     P1.update()
+
+    for player in players:
+        player.update()
+
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
@@ -250,24 +343,29 @@ while True:
         displaysurface.blit(entity.surf, entity.rect)
         entity.move()
     
-    player_x = int(P1.pos.x)
-    player_y = int(P1.pos.y)
+    player_count = 0
 
-    closest_platform = get_closest_platform(P1, platforms)
+    if count == 30 and cicle <=10:
 
-    if closest_platform:
-        closest_platform_x = closest_platform.rect.centerx
-        closest_platform_y = closest_platform.rect.centery
-
-
-    #print(count)
-    if count == 30:
-        print('COMPUTING FUCKING MOVIMENT ')
-        compute_moviment(player_x, player_y, closest_platform_x, closest_platform_y)
+        network_moviments(player_count)
+        
         count = 0
-    
+        cicle += 1
     else:
         count += 1
+
+        player.update()
+        displaysurface.blit(player.surf, player.rect)
+
+    if cicle == 11:
+        player_scores = [[player_network_list[i], scores[i]] for i in range(len(players))]
+        sorted_networks = network.Evolution.select_top_half(player_scores)
+        new_generation = network.genetics.mutate_network_parameters(sorted_networks)
+        new_generation = new_generation+new_generation
+
+        player_network_list = new_generation
+        print_high_score(players)
+        cicle = 0
 
     pygame.display.update()
     FramePerSec.tick(30) 

@@ -77,7 +77,7 @@ class RandomNeuralNetwork:
         hidden_layer_output = sigmoid(np.dot(inputs, self.input_weights) + self.input_biases)
         another_hidden_layer_output = sigmoid(np.dot(hidden_layer_output, self.hidden_weights) + self.hidden_biases)
         output = np.dot(another_hidden_layer_output, self.output_weights) + self.output_biases
-        return output
+        return list(output)
     
     def createInitialGeneration():
         # Generate 50 neural networks
