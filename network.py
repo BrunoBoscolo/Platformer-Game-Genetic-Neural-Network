@@ -15,24 +15,26 @@ class Parameters:
         self.output_biases = output_biases
 
     @staticmethod
-    def generate_weights(shape):
-        # Generate random weights with the specified shape
-        return np.random.randn(*shape)
+    def glorot_uniform(shape):
+        # Glorot initialization for weights
+        limit = np.sqrt(6.0 / (shape[0] + shape[1]))
+        return np.random.uniform(-limit, limit, shape)
 
     @staticmethod
-    def generate_biases(size):
-        # Generate random biases with the specified size
-        return np.random.randn(size)
+    def glorot_normal(shape):
+        # Glorot initialization for biases
+        stddev = np.sqrt(2.0 / (shape[0] + shape[1]))
+        return np.random.normal(0, stddev, shape)
 
     @staticmethod
     def create_parameters():
-        # Generate weights and biases
-        input_weights = Parameters.generate_weights((4, 4))
-        input_biases = Parameters.generate_biases(4)
-        hidden_weights = Parameters.generate_weights((4, 4))
-        hidden_biases = Parameters.generate_biases(4)
-        output_weights = Parameters.generate_weights((4, 2))
-        output_biases = Parameters.generate_biases(2)
+        # Generate weights and biases using Glorot initialization
+        input_weights = Parameters.glorot_uniform((4, 4))
+        input_biases = Parameters.glorot_normal((4,))
+        hidden_weights = Parameters.glorot_uniform((4, 4))
+        hidden_biases = Parameters.glorot_normal((4,))
+        output_weights = Parameters.glorot_uniform((4, 2))
+        output_biases = Parameters.glorot_normal((2,))
 
         return Parameters(input_weights, input_biases, hidden_weights, hidden_biases, output_weights, output_biases)
 
@@ -74,10 +76,11 @@ class RandomNeuralNetwork:
 
     def forward(self, inputs):
         # Forward pass through the network
-        hidden_layer_output = sigmoid(np.dot(inputs, self.input_weights) + self.input_biases)
-        another_hidden_layer_output = sigmoid(np.dot(hidden_layer_output, self.hidden_weights) + self.hidden_biases)
+        hidden_layer_output = np.maximum(0, np.dot(inputs, self.input_weights) + self.input_biases)
+        another_hidden_layer_output = np.maximum(0, np.dot(hidden_layer_output, self.hidden_weights) + self.hidden_biases)
         output = np.dot(another_hidden_layer_output, self.output_weights) + self.output_biases
         return list(output)
+
     
     def createInitialGeneration():
         # Generate 50 neural networks
