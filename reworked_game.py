@@ -434,7 +434,7 @@ if __name__ == '__main__':
             print(f'Valor médio de otimização da geração: {simulation_data.calculate_mean(scores)}')
             
             mean_scores.append([generation_count, simulation_data.calculate_mean(scores)])
-            print(mean_scores)
+            #print(mean_scores)
             scores = simulation_data.reset_score(scores, num_players)
 
             
