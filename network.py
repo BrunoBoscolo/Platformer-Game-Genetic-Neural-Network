@@ -134,7 +134,7 @@ class genetics:
     def mutate_network_parameters(generation_array):
         mutate_custom_network_array = []
         for network, fitness in generation_array:
-            mutated_parameters = Parameters.mutate_parameters(network, 0.7, 0.8)
+            mutated_parameters = Parameters.mutate_parameters(network, 0.7, 1.5)
             custom_network_mutated = CustomNeuralNetwork(mutated_parameters)
             mutate_custom_network_array.append(custom_network_mutated)
         return mutate_custom_network_array

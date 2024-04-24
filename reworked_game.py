@@ -309,7 +309,7 @@ if __name__ == '__main__':
     FPS = 60
     
     framerate = 30
-    num_players = 50
+    num_players = 1000
     max_cicles = 12
     fps_network = 30
 
