@@ -221,10 +221,10 @@ def get_closest_platform(player, platforms):
 PT1 = platform()
 P1 = Player()
  
-'''PT1.surf = pygame.Surface((WIDTH, 20))
+PT1.surf = pygame.Surface((WIDTH, 20))
 PT1.surf.fill((255,0,0))
 PT1.rect = PT1.surf.get_rect(center = (WIDTH/2, HEIGHT - 10))
-''' 
+ 
 all_sprites = pygame.sprite.Group()
 all_sprites.add(PT1)
 all_sprites.add(P1)
