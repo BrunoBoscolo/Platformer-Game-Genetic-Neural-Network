@@ -5,6 +5,8 @@ import random
 import network
 import sys
 
+import matplotlib.pyplot as plt
+
 #Entity classes
 
 class Player(pygame.sprite.Sprite):
@@ -197,6 +199,23 @@ class simulation_setup:
 
 class simulation_data:
 
+    def create_graph(mean_scores):
+        # Create an array of iteration numbers from 1 to the length of scores
+        x_values = [point[0] for point in mean_scores]
+        y_values = [point[1] for point in mean_scores]
+
+        # Plot the scores
+        plt.plot(x_values, y_values)
+
+
+        # Add labels and title
+        plt.xlabel('Iteration')
+        plt.ylabel('Performance')
+        plt.title('Simulation Scores')
+
+        # Show the plot
+        plt.show()
+
     def reset_score(scores, num_players):
         scores = [0]*num_players
         return scores
@@ -349,6 +368,8 @@ if __name__ == '__main__':
     player_network_list = simulation_setup.create_first_player_generation(num_players)
     simulation_setup.reset_players_position(players)
 
+    mean_scores = []
+
     while True:
 
         for player in players:
@@ -361,6 +382,7 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     pygame.quit()
+                    simulation_data.create_graph(mean_scores)
                     sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_g:
@@ -409,6 +431,8 @@ if __name__ == '__main__':
             
             highest_score = simulation_data.print_high_score(scores)
             print(f'Valor médio de otimização da geração: {simulation_data.calculate_mean(scores)}')
+            mean_scores.append([generation_count, simulation_data.calculate_mean(scores)])
+            #print(mean_scores)
             scores = simulation_data.reset_score(scores, num_players)
             
 
