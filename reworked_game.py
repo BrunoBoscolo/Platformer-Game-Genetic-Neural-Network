@@ -408,6 +408,7 @@ if __name__ == '__main__':
             new_generation = network_usage.create_new_generation(player_network_list, scores)
             
             highest_score = simulation_data.print_high_score(scores)
+            print(f'Valor médio de otimização da geração: {simulation_data.calculate_mean(scores)}')
             scores = simulation_data.reset_score(scores, num_players)
 
             player_network_list = new_generation
